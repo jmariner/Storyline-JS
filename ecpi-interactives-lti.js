@@ -1,16 +1,17 @@
-window.LTI = {
-	vars: {
+import { initialize, Library } from "./core.js";
+
+class LTI extends Library {
+	vars = {
 		enabled: "LTI_Enabled",
 		versionID: "LTI_VersionID",
 		triggerComplete: "LTI_TriggerComplete",
-	},
+	};
 
-	enabled: false,
-	versionID: null,
-	data: null,
+	enabled = false;
+	versionID = null;
+	data = null;
 
-	paths: {},
-	player: null,
+	paths = {};
 
 	async _fetch(method, url, options = {}) {
 		if (!this.enabled) throw new Error("LTI is not enabled");
@@ -28,19 +29,14 @@ window.LTI = {
 			throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
 
 		return resp;
-	},
+	}
 
 	async _init() {
-		console.log("LTI: Initializing");
-
-		// eslint-disable-next-line no-undef
-		this.player = GetPlayer();
-
 		const params = new URLSearchParams(location.search);
 		this.versionID = params.get("versionID");
 		this.enabled = ["1", "true"].includes(params.get("lti"));
 
-		this.player.SetVar(this.vars.versionID, this.versionID);
+		this.setVar(this.vars.versionID, this.versionID);
 		if (!this.enabled) return;
 
 		const pathsUrl = params.get("pathsUrl");
@@ -54,14 +50,14 @@ window.LTI = {
 		const { data } = await dataResp.json();
 		this.data = data;
 
-		this.player.SetVar(this.vars.enabled, true);
-	},
+		this.setVar(this.vars.enabled, true);
+	}
 
 	triggerComplete() {
 		if (window.parent)
 			window.parent.postMessage("app complete", "*");
 		document.dispatchEvent(new Event("unity:quit"));
-	},
+	}
 
 	submit(...resultArgs) {
 		const hasScore = typeof resultArgs[0] === "number";
@@ -76,7 +72,7 @@ window.LTI = {
 
 		const handleFail = (err) => {
 			if (err)
-				console.error(err);
+				this.error(err);
 			if (confirm("LTI Submission failed; see console for details.\n\nPress OK to open results preview in new tab.")) {
 				const previewHTML = [
 					hasScore ? `<p><b>Score:</b> ${results.score}</p>` : "",
@@ -88,7 +84,7 @@ window.LTI = {
 		};
 
 		if (!this.enabled) {
-			console.warn("LTI not connected, submission not available. Results:", results);
+			this.warn("LTI not connected, submission not available. Results:", results);
 			handleFail();
 			return;
 		}
@@ -101,10 +97,10 @@ window.LTI = {
 		this._fetch("POST", this.paths.submit, {
 			body: JSON.stringify(results)
 		}).then(() => {
-			if (this.player.GetVar(this.vars.triggerComplete))
+			if (this.getVar(this.vars.triggerComplete, false))
 				this.triggerComplete();
 		}).catch(handleFail);
-	},
+	}
 
 	// TODO custom data API (get/set)
 
@@ -117,10 +113,7 @@ window.LTI = {
 
 		const excelDataResp = await this._fetch("GET", url);
 		return excelDataResp.json();
-	},
-};
+	}
+}
 
-window.LTI._init().then(() => {
-	if (window.onScriptLoaded)
-		window.onScriptLoaded();
-}).catch(console.error);
+export default await initialize(LTI);
