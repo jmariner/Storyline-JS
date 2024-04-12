@@ -1,13 +1,13 @@
 window.LTI = {
-	enabled: false,
-	versionID: null,
-	data: null,
-
 	vars: {
 		enabled: "LTI_Enabled",
 		versionID: "LTI_VersionID",
 		triggerComplete: "LTI_TriggerComplete",
 	},
+
+	enabled: false,
+	versionID: null,
+	data: null,
 
 	paths: {},
 	player: null,
@@ -24,14 +24,15 @@ window.LTI = {
 			headers,
 		});
 
-		if (!resp.ok) {
+		if (!resp.ok)
 			throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
-		}
 
 		return resp;
 	},
 
 	async _init() {
+		console.log("LTI: Initializing");
+
 		// eslint-disable-next-line no-undef
 		this.player = GetPlayer();
 
@@ -119,4 +120,7 @@ window.LTI = {
 	},
 };
 
-window.LTI._init().catch(console.error);
+window.LTI._init().then(() => {
+	if (window.onScriptLoaded)
+		window.onScriptLoaded();
+}).catch(console.error);
