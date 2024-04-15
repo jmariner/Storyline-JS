@@ -8,6 +8,7 @@ class RandTerms extends Library {
 		excelFileId: "RandTerms_ExcelFileID",
 		excelSheet: "RandTerms_ExcelSheet",
 		excelArray: "RandTerms_ExcelArrayFields",
+		randomizeOnInit: "RandTerms_RandomizeOnInit",
 	};
 
 	terms = [];
@@ -45,6 +46,9 @@ class RandTerms extends Library {
 		}
 
 		this.terms = rows;
+
+		if (this.getVar(this.vars.randomizeOnInit, false))
+			this.randomize();
 	}
 
 	randomize() {

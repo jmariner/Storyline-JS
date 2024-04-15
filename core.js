@@ -2,9 +2,7 @@
 // - libs need to export a list of Storyline vars (with types) that storyline-project-tools can generate,
 // 		that can be accessed without initializing the lib.
 
-// ALSO
-// look into using a web object to more easily load required libs. could be an HTML file with JS that reads list of libs from query string.
-// current issue: libs need to load in story.html, not in an iframe.
+// TODO need to figure out cache-busting; currently jsdelivr caches: https://www.jsdelivr.com/documentation#id-caching
 
 // ALSO
 // look into triggering JS functions by listening for a boolean Storyline var changing to true, then reset the var to false.
@@ -23,6 +21,7 @@ const player = typeof GetPlayer === "function" ? GetPlayer() : null;
 
 export class Library {
 	player = player;
+	missingVars = [];
 
 	/** @abstract */
 	async _init() { return; }
@@ -33,9 +32,16 @@ export class Library {
 	 * @returns {StorylineVar | null}
 	 */
 	getVar(name, defaultValue = null) {
-		// TODO find a way to check if var exists and avoid calling GetVar again if it doesn't
+		if (this.missingVars.includes(name))
+			return defaultValue;
+
 		const val = this.player.GetVar(name);
-		return val === null ? defaultValue : val;
+		if (val === null) {
+			this.missingVars.push(name);
+			return defaultValue;
+		}
+
+		return val;
 	}
 
 	/**
@@ -43,8 +49,30 @@ export class Library {
 	 * @param {StorylineVar} value
 	 */
 	setVar(name, value) {
-		// TODO find a way to check if var exists and avoid calling SetVar again if it doesn't
+		if (this.getVar(name) === null)
+			return;
 		this.player.SetVar(name, value);
+	}
+
+	/**
+	 * @template {string} K
+	 * @param {K[]} varNames
+	 * @param {Record<K, any>} defaultObj
+	 * @returns {Record<K, StorylineVar>}
+	 */
+	getVars(varNames, defaultObj = {}) {
+		return varNames.reduce((acc, name) => {
+			acc[name] = this.getVar(name, defaultObj[name]);
+			return acc;
+		}, {});
+	}
+
+	/**
+	 * @param {Record<string, any>} varObj
+	 */
+	setVars(varObj) {
+		for (const [name, value] of Object.entries(varObj))
+			this.setVar(name, value);
 	}
 
 	log(...args) {

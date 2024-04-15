@@ -3,10 +3,14 @@ import RandTerms from "./rand-terms.js";
 
 class RandTermsCats extends Library {
 	vars = {
+		ready: "RandTermsCats_Ready",
 		catCount: "RandTermsCats_Count",
+		randomizeOnInit: "RandTermsCats_RandomizeOnInit",
 	};
 
-	termsByCat = {};
+	allTermsByCat = {};
+	randCategories = [];
+	randTermsByCat = {};
 
 	async _init() {
 		const { terms } = RandTerms;
@@ -17,16 +21,21 @@ class RandTermsCats extends Library {
 
 		// terms need to stay in the same order in each category, since this is
 		// used for Jeopardy-style games, where terms are ordered by difficulty.
-		this.termsByCat = terms.reduce((acc, term) => {
+		this.allTermsByCat = terms.reduce((acc, term) => {
 			if (!acc[term.category])
 				acc[term.category] = [];
 			acc[term.category].push(term);
 			return acc;
 		}, {});
+
+		if (this.getVar(this.vars.randomizeOnInit, false))
+			this.randomize();
+
+		this.setVar(this.vars.ready, true);
 	}
 
 	randomize() {
-		const categories = Object.keys(this.termsByCat);
+		const categories = Object.keys(this.allTermsByCat);
 		let catCount = this.getVar(this.vars.catCount);
 		if (!catCount || catCount < 1) {
 			this.warn(`Var ${this.vars.catCount} not set, using all categories`);
@@ -37,10 +46,14 @@ class RandTermsCats extends Library {
 			catCount = categories.length;
 		}
 
+		this.randCategories = [...categories].sort(() => Math.random() - 0.5);
+		this.randTermsByCat = {};
+
 		const termCount = RandTerms._getTermCount();
-		const randCats = [...categories].sort(() => Math.random() - 0.5);
 		for (let c = 0; c < catCount; c++) {
-			const terms = this.termsByCat[randCats[c]];
+			const curCategory = this.randCategories[c];
+
+			const terms = this.allTermsByCat[curCategory];
 			const randTerms =
 				[...Array(terms.length).keys()]			// array of indexes, up to term count
 					.sort(() => Math.random() - 0.5)	// shuffle
@@ -48,14 +61,28 @@ class RandTermsCats extends Library {
 					.sort((a, b) => a - b)				// sort back into order
 					.map(i => terms[i]);				// get term from index
 
-			for (let i = 0; i < termCount; i++) {
-				const term = randTerms[i];
-				this.setVar(`Term${c + 1}_${i + 1}`, term.term);
-				this.setVar(`Def${c + 1}_${i + 1}`, term.definition);
-			}
+			this.randTermsByCat[curCategory] = randTerms;
 
-			// this.log(randCats[c], randTerms.map(t => t.term).join(", "));
+			this.setVar(`Cat${c + 1}`, curCategory);
 		}
+	}
+
+	getTermInfo(termID) {
+		const [cat, term] = termID.split(".");
+		const catIndex = parseInt(cat, 10) - 1;
+		const termIndex = parseInt(term, 10) - 1;
+		const terms = this.randTermsByCat[this.randCategories[catIndex]];
+		if (!terms)
+			throw new Error(`Category ${cat} not found`);
+		const info = terms[termIndex];
+		if (!info)
+			throw new Error(`Term ${term} not found in category ${cat}`);
+
+		return {
+			...info,
+			termIndex,
+			catIndex,
+		};
 	}
 }
 
