@@ -105,8 +105,6 @@ class LTI extends Library {
 	// TODO custom data API (get/set)
 
 	async getLiveExcelData(site, fileId, sheet, array) {
-		if (!this.enabled) throw new Error("LTI is not enabled");
-
 		const url = new URL(this.paths.liveDataExcel);
 		url.searchParams.set("site", site);
 		url.searchParams.set("fileId", fileId);
