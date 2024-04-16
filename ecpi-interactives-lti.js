@@ -13,35 +13,20 @@ class LTI extends Library {
 
 	paths = {};
 
-	async _fetch(method, url, options = {}) {
-		if (!this.enabled) throw new Error("LTI is not enabled");
-
-		let headers = method === "POST" ? { "Content-Type": "application/json" } : {};
-		if (options.headers)
-			headers = { ...headers, ...options.headers };
-		const resp = await fetch(url, {
-			...options,
-			method,
-			headers,
-		});
-
-		if (!resp.ok)
-			throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
-
-		return resp;
-	}
-
 	async _init() {
 		const params = new URLSearchParams(location.search);
 		this.versionID = params.get("versionID");
-		this.enabled = ["1", "true"].includes(params.get("lti"));
 
 		this.setVar(this.vars.versionID, this.versionID);
-		if (!this.enabled) return;
 
 		const pathsUrl = params.get("pathsUrl");
-		const pathsResp = await this._fetch("GET", pathsUrl);
-		this.paths = await pathsResp.json();
+		if (pathsUrl) {
+			const pathsResp = await this._fetch("GET", pathsUrl);
+			this.paths = await pathsResp.json();
+		}
+
+		this.enabled = ["1", "true"].includes(params.get("lti"));
+		if (!this.enabled) return;
 
 		if (!this.paths.dataJson || !this.paths.submit)
 			throw new Error("Missing required path in paths");

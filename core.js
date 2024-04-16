@@ -86,6 +86,22 @@ export class Library {
 	error(...args) {
 		console.error(`[${this.constructor.name}]`, ...args);
 	}
+
+	async _fetch(method, url, options = {}) {
+		let headers = method === "POST" ? { "Content-Type": "application/json" } : {};
+		if (options.headers)
+			headers = { ...headers, ...options.headers };
+		const resp = await fetch(url, {
+			...options,
+			method,
+			headers,
+		});
+
+		if (!resp.ok)
+			throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+
+		return resp;
+	}
 }
 
 /**
