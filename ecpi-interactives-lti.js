@@ -1,6 +1,8 @@
 import { initialize, Library } from "./core.js";
 
 class LTI extends Library {
+	moduleID = "ecpi-interactives-lti";
+
 	vars = {
 		enabled: "LTI_Enabled",
 		versionID: "LTI_VersionID",

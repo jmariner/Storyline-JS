@@ -1,23 +1,36 @@
-// Copy/paste this into a Storyline trigger to load libraries.
+// eslint-disable-next-line no-undef
+const player = GetPlayer();
+const vars = { libs: "StorylineJS", ready: "StorylineJS_Ready", local: "StorylineJS_Local" };
+const isLocal = player.GetVar(vars.local);
+const basePath = isLocal ? "http://localhost:8000/" : "https://cdn.jsdelivr.net/gh/jmariner/Storyline-JS@main/";
+const suffix = ".js";
+const libsRaw = player.GetVar(vars.libs);
 
-function loadLibs(basePath, ...libs) {
-	const existing = [...document.querySelectorAll("script[type=module]")];
+if (libsRaw === null)
+	throw new Error("StorylineJS var not set");
 
-	for (const src of libs) {
-		const fullSrc = basePath + src + ".js";
-		if (existing.some(el => el.src === fullSrc))
-			continue;
+const libs = libsRaw.split(",").map(lib => lib.trim());
+const existing = [...document.querySelectorAll("script[type=module]")];
+const libsWaiting = {};
 
-		const scriptEl = document.createElement("script");
-		scriptEl.type = "module";
-		scriptEl.src = fullSrc;
-		document.head.appendChild(scriptEl);
-	}
+for (const src of libs) {
+	const fullSrc = basePath + src + suffix;
+	if (existing.some(el => el.src === fullSrc))
+		continue;
+	libsWaiting[src] = fullSrc;
 }
 
-// EX:
-loadLibs(
-	"https://cdn.jsdelivr.net/gh/jmariner/Storyline-JS/",
-	"rand-terms-cats",
-	"ecpi-interactives-lti"
-);
+if (typeof window === "object") {
+	window.StorylineJS_LibLoaded = function (libName) {
+		delete libsWaiting[libName];
+		if (Object.keys(libsWaiting).length === 0)
+			player.SetVar(vars.ready, true);
+	};
+}
+
+for (const fullSrc of Object.values(libsWaiting)) {
+	const scriptEl = document.createElement("script");
+	scriptEl.type = "module";
+	scriptEl.src = fullSrc;
+	document.head.appendChild(scriptEl);
+}

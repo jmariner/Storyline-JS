@@ -20,6 +20,13 @@
 const player = typeof GetPlayer === "function" ? GetPlayer() : null;
 
 export class Library {
+	/**
+	 * @abstract
+	 * @type {string}
+	 * This must be set to the name of the module file, without path or file extension.
+	 */
+	moduleID = null;
+
 	player = player;
 	missingVars = [];
 
@@ -120,8 +127,13 @@ export async function initialize(LibClass) {
 
 	if (typeof window === "object") {
 		if (name in window)
-			lib.warn(`Library already exists in window, overwriting`);
+			lib.warn(`Library "${name}" already exists in window, overwriting`);
 		window[name] = lib;
+
+		if (lib.moduleID === null)
+			throw new Error(`Library "${name}" missing moduleID`);
+
+		window.StorylineJS_LibLoaded(lib.moduleID);
 	}
 
 	return lib;

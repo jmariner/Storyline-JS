@@ -2,6 +2,8 @@ import { initialize, Library } from "./core.js";
 import LTI from "./ecpi-interactives-lti.js";
 
 class RandTerms extends Library {
+	moduleID = "rand-terms";
+
 	vars = {
 		count: "RandTerms_Count",
 		excelFileSite: "RandTerms_ExcelFileSite",

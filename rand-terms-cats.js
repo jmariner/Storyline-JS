@@ -2,8 +2,9 @@ import { initialize, Library } from "./core.js";
 import RandTerms from "./rand-terms.js";
 
 class RandTermsCats extends Library {
+	moduleID = "rand-terms-cats";
+
 	vars = {
-		ready: "RandTermsCats_Ready",
 		catCount: "RandTermsCats_Count",
 		randomizeOnInit: "RandTermsCats_RandomizeOnInit",
 	};
@@ -30,8 +31,6 @@ class RandTermsCats extends Library {
 
 		if (this.getVar(this.vars.randomizeOnInit, false))
 			this.randomize();
-
-		this.setVar(this.vars.ready, true);
 	}
 
 	randomize() {
