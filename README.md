@@ -23,9 +23,11 @@ All LTI-related functionality, including:
 
 # Other Files
 
-`core`: Contains base code used by all modules.
+[`core.js`](./core.js): Contains base code used by all modules.
 
-`loader`: Contains script to be added to JavaScript trigger which loads requested list of modules.
+[`loader.js`](./loader.js): Contains script that loads requested list of modules.
+
+[`loader.storyline.js`](./loader.storyline.js): Contains Storyline script to be added in a trigger which loads `loader`.
 
 # jsDelivr URLs
 
