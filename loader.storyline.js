@@ -5,6 +5,7 @@
 
 //  ====== COPY BELOW THIS LINE ======
 
+window.StorylineJS_Path = GetPlayer().GetVar("StorylineJS_Local") ? "http://localhost:8000/" : "https://cdn.jsdelivr.net/gh/jmariner/Storyline-JS@main/";
 const scriptEl = document.createElement("script");
-scriptEl.src = `${GetPlayer().GetVar("StorylineJS_Local") ? "http://localhost:8000/" : "https://cdn.jsdelivr.net/gh/jmariner/Storyline-JS@main/"}loader.js`;
+scriptEl.src = `${window.StorylineJS_Path}loader.js`;
 document.head.appendChild(scriptEl);
