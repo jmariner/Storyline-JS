@@ -96,14 +96,14 @@ class LTI extends Library {
 		let urlPath = this.paths.liveDataExcel;
 		if (!urlPath) {
 			const maybeFallback = this.getVar(this.vars.liveDataExcelFallbackURL);
-			if (!maybeFallback)
+			if (!maybeFallback || !this.isReview)
 				throw new Error("No live data URL available");
 
 			urlPath = maybeFallback;
 			this.warn("Using fallback live data URL:", urlPath);
 		}
 
-		const url = new URL(this.paths.liveDataExcel);
+		const url = new URL(urlPath);
 		url.searchParams.set("site", site);
 		url.searchParams.set("fileId", fileId);
 		if (sheet) url.searchParams.set("sheet", sheet);
