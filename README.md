@@ -26,3 +26,15 @@ All LTI-related functionality, including:
 `core`: Contains base code used by all modules.
 
 `loader`: Contains script to be added to JavaScript trigger which loads requested list of modules.
+
+# jsDelivr URLs
+
+Provided to more easily [purge jsDelivr's cache](https://www.jsdelivr.com/tools/purge).
+
+```
+https://cdn.jsdelivr.net/gh/jmariner/Storyline-JS@main/loader.js
+https://cdn.jsdelivr.net/gh/jmariner/Storyline-JS@main/core.js
+https://cdn.jsdelivr.net/gh/jmariner/Storyline-JS@main/ecpi-interactives-lti.js
+https://cdn.jsdelivr.net/gh/jmariner/Storyline-JS@main/rand-terms.js
+https://cdn.jsdelivr.net/gh/jmariner/Storyline-JS@main/rand-terms-cats.js
+```
