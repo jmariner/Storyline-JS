@@ -7,6 +7,7 @@ class LTI extends Library {
 		enabled: "LTI_Enabled",
 		versionID: "LTI_VersionID",
 		triggerComplete: "LTI_TriggerComplete",
+		liveDataExcelFallbackURL: "LTI_LiveDataExcelFallbackURL",
 	};
 
 	enabled = false;
@@ -92,6 +93,16 @@ class LTI extends Library {
 	// TODO custom data API (get/set)
 
 	async getLiveExcelData(site, fileId, sheet, array) {
+		let urlPath = this.paths.liveDataExcel;
+		if (!urlPath) {
+			const maybeFallback = this.getVar(this.vars.liveDataExcelFallbackURL);
+			if (!maybeFallback)
+				throw new Error("No live data URL available");
+
+			urlPath = maybeFallback;
+			this.warn("Using fallback live data URL:", urlPath);
+		}
+
 		const url = new URL(this.paths.liveDataExcel);
 		url.searchParams.set("site", site);
 		url.searchParams.set("fileId", fileId);

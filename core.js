@@ -19,6 +19,8 @@
 // eslint-disable-next-line no-undef
 const player = typeof GetPlayer === "function" ? GetPlayer() : null;
 
+const isReview = location.href.startsWith("https://articulateusercontent.com/review/");
+
 export class Library {
 	/**
 	 * @abstract
@@ -28,6 +30,7 @@ export class Library {
 	moduleID = null;
 
 	player = player;
+	isReview = isReview;
 	missingVars = [];
 
 	/** @abstract */
