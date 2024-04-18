@@ -1,8 +1,7 @@
 // eslint-disable-next-line no-undef
 const player = GetPlayer();
-const vars = { libs: "StorylineJS", ready: "StorylineJS_Ready", local: "StorylineJS_Local" };
-const isLocal = player.GetVar(vars.local);
-const basePath = isLocal ? "http://localhost:8000/" : "https://cdn.jsdelivr.net/gh/jmariner/Storyline-JS@main/";
+const vars = { libs: "StorylineJS", ready: "StorylineJS_Ready" };
+const basePath = window.StorylineJS_Path;
 const suffix = ".js";
 const libsRaw = player.GetVar(vars.libs);
 
