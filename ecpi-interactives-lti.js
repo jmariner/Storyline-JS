@@ -13,6 +13,7 @@ class LTI extends Library {
 	enabled = false;
 	versionID = null;
 	data = null;
+	submitResult = null;
 
 	paths = {};
 
@@ -48,6 +49,11 @@ class LTI extends Library {
 	}
 
 	submit(...resultArgs) {
+		if (this.submitResult !== null) {
+			this.warn("Already submitted results; ignoring additional submission");
+			return;
+		}
+
 		const hasScore = typeof resultArgs[0] === "number";
 		const hasText = resultArgs.length > (hasScore ? 1 : 0);
 		const text = resultArgs
@@ -57,6 +63,7 @@ class LTI extends Library {
 		const results = {};
 		if (hasScore) results.score = resultArgs[0];
 		if (hasText) results.text = text;
+		this.submitResult = { ...results };
 
 		const handleFail = (err) => {
 			if (err)
@@ -79,6 +86,7 @@ class LTI extends Library {
 
 		if (!hasScore && !hasText) {
 			handleFail("No results to submit.");
+			this.submitResult = null;
 			return;
 		}
 
