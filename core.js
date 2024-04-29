@@ -3,6 +3,14 @@
 // 		that can be accessed without initializing the lib.
 
 // TODO need to figure out cache-busting; currently jsdelivr caches: https://www.jsdelivr.com/documentation#id-caching
+// caching is still a problem - purging doesn't always work even when it says it does.
+// consider setting up something with Github Actions to auto-update a hosted version of the code.
+// though either way, the browser cache may still hold old versions for longer than desired. Maybe a custom server that can
+// allows browser caching only until a new commit is made.
+
+// best way to deal with caching is being able to update the URLs when needed, so look into a server that can
+// serve a list of module URLs (or whole HTML snippet) with each URL having a cache-busting query string computed from the commit hash.
+// though would need to figure out how to apply that query string to the imported URLs in the JS modules. import-map?
 
 // ALSO
 // look into triggering JS functions by listening for a boolean Storyline var changing to true, then reset the var to false.
