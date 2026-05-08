@@ -17,9 +17,9 @@
  * This should work in preview mode, even when previewing only a single slide.
  */
 
-(async () => {
-	const DEBUG = false;
+const DEBUG = false;
 
+(async () => {
 	const HIGHLIGHT_SCRIPT_ID = "storyline-hljs-script";
 	const HIGHLIGHT_THEME_ID = "storyline-hljs-theme";
 	const HIGHLIGHT_SCRIPT_SRC =
@@ -164,6 +164,11 @@
 			pre.style.height = "100%";
 			pre.style.boxSizing = "border-box";
 			pre.style.tabSize = "4";
+		}
+
+		const code = el.querySelector("code");
+		if (code) {
+			code.style.backgroundColor = "transparent";
 		}
 	}
 
