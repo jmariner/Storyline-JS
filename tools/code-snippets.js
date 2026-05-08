@@ -17,8 +17,6 @@
  * This should work in preview mode, even when previewing only a single slide.
  */
 
-// ====== COPY BELOW THIS LINE ======
-
 (async () => {
 	const DEBUG = false;
 
