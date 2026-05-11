@@ -173,6 +173,146 @@ const DEBUG = false;
 		}
 	}
 
+	function isBraceLanguage(language) {
+		const braceLanguages = new Set([
+			"c",
+			"h",
+			"cpp",
+			"c++",
+			"cc",
+			"cxx",
+			"hpp",
+			"hxx",
+			"java",
+			"javascript",
+			"js",
+			"typescript",
+			"ts",
+			"c#",
+			"cs",
+			"go",
+			"rust",
+			"php",
+		]);
+
+		return braceLanguages.has(String(language || "").toLowerCase());
+	}
+
+	function countBracesOutsideStrings(line) {
+		let openCount = 0;
+		let closeCount = 0;
+		let inSingleQuote = false;
+		let inDoubleQuote = false;
+		let inTemplate = false;
+		let escaped = false;
+
+		for (let i = 0; i < line.length; i += 1) {
+			const ch = line[i];
+			const next = i + 1 < line.length ? line[i + 1] : "";
+
+			if (!inSingleQuote && !inDoubleQuote && !inTemplate) {
+				if (ch === "/" && next === "/") break;
+			}
+
+			if (escaped) {
+				escaped = false;
+				continue;
+			}
+
+			if (ch === "\\") {
+				escaped = true;
+				continue;
+			}
+
+			if (!inDoubleQuote && !inTemplate && ch === "'") {
+				inSingleQuote = !inSingleQuote;
+				continue;
+			}
+
+			if (!inSingleQuote && !inTemplate && ch === '"') {
+				inDoubleQuote = !inDoubleQuote;
+				continue;
+			}
+
+			if (!inSingleQuote && !inDoubleQuote && ch === "`") {
+				inTemplate = !inTemplate;
+				continue;
+			}
+
+			if (inSingleQuote || inDoubleQuote || inTemplate) continue;
+
+			if (ch === "{") openCount += 1;
+			else if (ch === "}") closeCount += 1;
+		}
+
+		return { openCount, closeCount };
+	}
+
+	function reindentPreservingContent(codeText, language) {
+		if (!isBraceLanguage(language)) return codeText;
+
+		const lang = String(language || "").toLowerCase();
+		const isCppFamily = [
+			"c++",
+			"cpp",
+			"cc",
+			"cxx",
+			"h",
+			"hpp",
+			"hxx",
+		].includes(lang);
+
+		const lines = codeText.replace(/\r\n?/g, "\n").split("\n");
+		let indentLevel = 0;
+		const tab = "\t";
+		const result = [];
+		let accessSectionBaseIndent = null;
+
+		for (const line of lines) {
+			const content = line.trimStart();
+
+			if (content.length === 0) {
+				result.push("");
+				continue;
+			}
+
+			const startsWithClosingBrace = /^\}/.test(content);
+			const baseIndentLevel = startsWithClosingBrace
+				? Math.max(0, indentLevel - 1)
+				: indentLevel;
+
+			const isAccessSpecifier =
+				isCppFamily &&
+				/^(?:public|private|protected)\s*:/.test(content);
+
+			const inAccessSection =
+				accessSectionBaseIndent !== null &&
+				!startsWithClosingBrace &&
+				baseIndentLevel >= accessSectionBaseIndent &&
+				!isAccessSpecifier;
+
+			const lineIndentLevel = inAccessSection
+				? baseIndentLevel + 1
+				: baseIndentLevel;
+
+			result.push(tab.repeat(lineIndentLevel) + content);
+
+			if (isAccessSpecifier) accessSectionBaseIndent = baseIndentLevel;
+
+			const { openCount, closeCount } =
+				countBracesOutsideStrings(content);
+			indentLevel = Math.max(0, indentLevel + openCount - closeCount);
+
+			if (
+				accessSectionBaseIndent !== null &&
+				indentLevel < accessSectionBaseIndent
+			)
+				accessSectionBaseIndent = null;
+		}
+
+		return result.join("\n");
+	}
+
 	debug("Trigger started", { href: location.href });
 	const hljs = await ensureHighlightJs();
 	const targets = document.querySelectorAll(TARGET_SELECTOR);
@@ -210,8 +350,9 @@ const DEBUG = false;
 		}
 
 		let highlighted;
+		const indentedCodeText = reindentPreservingContent(codeText, language);
 		if (hljs.getLanguage(language))
-			highlighted = hljs.highlight(codeText, {
+			highlighted = hljs.highlight(indentedCodeText, {
 				language,
 				ignoreIllegals: true,
 			}).value;
@@ -220,7 +361,7 @@ const DEBUG = false;
 				el,
 				language,
 			});
-			highlighted = hljs.highlightAuto(codeText).value;
+			highlighted = hljs.highlightAuto(indentedCodeText).value;
 		}
 
 		renderHighlightedCode(el, highlighted, language);
