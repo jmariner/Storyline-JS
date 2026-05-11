@@ -154,21 +154,21 @@ const DEBUG = false;
 	}
 
 	function renderHighlightedCode(el, highlightedHtml, language) {
-		el.innerHTML = `<pre class="storyline-hljs-pre"><code class="hljs language-${language}">${highlightedHtml}</code></pre>`;
+		const container = el.querySelector(".textlib-content-wrap") || el;
+		container.innerHTML = `<pre class="storyline-hljs-pre"><code class="hljs language-${language}">${highlightedHtml}</code></pre>`;
 
-		const pre = el.querySelector(".storyline-hljs-pre");
+		const pre = container.querySelector("pre.storyline-hljs-pre");
 		if (pre) {
 			pre.style.margin = "0";
 			pre.style.whiteSpace = "pre";
-			pre.style.overflow = "auto";
 			pre.style.width = "100%";
-			pre.style.height = "100%";
 			pre.style.boxSizing = "border-box";
 			pre.style.tabSize = "4";
 		}
 
-		const code = el.querySelector("code");
+		const code = container.querySelector("code.hljs");
 		if (code) {
+			code.style.padding = "0";
 			code.style.backgroundColor = "transparent";
 		}
 	}
