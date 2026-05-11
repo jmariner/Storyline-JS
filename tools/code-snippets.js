@@ -112,11 +112,16 @@ const DEBUG = false;
 			}
 			rawText = allLines.join("\n");
 		} else {
-			rawText = (
-				contentContainer.innerText ||
-				contentContainer.textContent ||
-				""
-			).trimEnd();
+			const svgText = extractLinesFromSvgText(clone);
+			if (svgText.length > 0) {
+				rawText = svgText.join("\n").trimEnd();
+			} else {
+				rawText = (
+					contentContainer.innerText ||
+					contentContainer.textContent ||
+					""
+				).trimEnd();
+			}
 		}
 
 		return rawText;
@@ -137,6 +142,103 @@ const DEBUG = false;
 		if (currentLine) {
 			lines.push(currentLine);
 		}
+
+		return lines;
+	}
+
+	function parseFirstNumericCoord(value) {
+		if (!value) return null;
+		const first = String(value)
+			.trim()
+			.split(/[\s,]+/)[0];
+		const parsed = Number.parseFloat(first);
+		return Number.isFinite(parsed) ? parsed : null;
+	}
+
+	function inferLineStepFromYs(sortedUniqueYs) {
+		const deltas = [];
+		for (let i = 1; i < sortedUniqueYs.length; i += 1) {
+			const delta = sortedUniqueYs[i] - sortedUniqueYs[i - 1];
+			if (delta > 0.1) deltas.push(delta);
+		}
+
+		if (deltas.length === 0) return 0;
+
+		deltas.sort((a, b) => a - b);
+		return deltas[Math.floor(deltas.length / 2)];
+	}
+
+	function extractLinesFromSvgText(root) {
+		const tspans = Array.from(root.querySelectorAll("svg text tspan"));
+		if (tspans.length === 0) return [];
+
+		const segments = [];
+		for (const tspan of tspans) {
+			const text = (tspan.textContent || "")
+				.replace(/\u00a0/g, " ")
+				.trimEnd();
+
+			if (!text) continue;
+
+			const y = parseFirstNumericCoord(tspan.getAttribute("y"));
+			if (y === null) continue;
+
+			segments.push({ text, y });
+		}
+
+		if (segments.length === 0) return [];
+
+		segments.sort((a, b) => a.y - b.y);
+
+		const uniqueYs = [];
+		for (const seg of segments) {
+			if (
+				uniqueYs.length === 0 ||
+				Math.abs(seg.y - uniqueYs[uniqueYs.length - 1]) > 0.01
+			)
+				uniqueYs.push(seg.y);
+		}
+
+		const lineStep = inferLineStepFromYs(uniqueYs);
+		const lines = [];
+		let currentY = null;
+		let currentLine = "";
+
+		for (const seg of segments) {
+			if (currentY === null) {
+				currentY = seg.y;
+				currentLine = seg.text;
+				continue;
+			}
+
+			if (Math.abs(seg.y - currentY) <= 0.01) {
+				currentLine += seg.text;
+				continue;
+			}
+
+			lines.push(currentLine);
+
+			if (lineStep > 0) {
+				const gap = seg.y - currentY;
+				const missingLineCount = Math.max(
+					0,
+					Math.round(gap / lineStep) - 1,
+				);
+				for (let i = 0; i < missingLineCount; i += 1) lines.push("");
+			}
+
+			currentY = seg.y;
+			currentLine = seg.text;
+		}
+
+		if (currentLine.length > 0) lines.push(currentLine);
+
+		debug("Extracted SVG text lines", {
+			segmentCount: segments.length,
+			lineCount: lines.length,
+			lineStep,
+			preview: lines.slice(0, 5),
+		});
 
 		return lines;
 	}
@@ -331,6 +433,7 @@ const DEBUG = false;
 
 		const rawText = extractCodeTextRaw(el);
 		const match = rawText.match(PREFIX_REGEX);
+
 		if (!match) {
 			debug("Skipping element without marker", el);
 			continue;
