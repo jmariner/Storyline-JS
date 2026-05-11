@@ -17,6 +17,8 @@
  * This should work in preview mode, even when previewing only a single slide.
  */
 
+// Theme ID from https://highlightjs.org/demo without "-min"
+const THEME_ID = "vs";
 const DEBUG = false;
 
 (async () => {
@@ -24,8 +26,7 @@ const DEBUG = false;
 	const HIGHLIGHT_THEME_ID = "storyline-hljs-theme";
 	const HIGHLIGHT_SCRIPT_SRC =
 		"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js";
-	const HIGHLIGHT_THEME_SRC =
-		"https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css";
+	const HIGHLIGHT_THEME_SRC = `https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/${THEME_ID}.min.css`;
 	const TARGET_SELECTOR = ".slide-object";
 	const PREFIX_REGEX = /^\s*SYNTAX\s+HIGHLIGHT\s*:\s*(\S+)(?:\s+|$)/i;
 
@@ -182,29 +183,29 @@ const DEBUG = false;
 
 	let processedCount = 0;
 
-	for (const [index, el] of [...targets].entries()) {
+	for (const el of [...targets]) {
 		if (el.dataset.syntaxHighlighted === "true") {
-			debug("Skipping already-highlighted element", { index });
+			debug("Skipping already-highlighted element", el);
 			continue;
 		}
 
 		const rawText = extractCodeTextRaw(el);
 		const match = rawText.match(PREFIX_REGEX);
 		if (!match) {
-			debug("Skipping element without marker", { index });
+			debug("Skipping element without marker", el);
 			continue;
 		}
 
 		const language = match[1].trim();
 		debug("Found marker", {
-			index,
+			el,
 			language,
 			rawPreview: rawText.slice(0, 100),
 		});
 
 		const codeText = extractCodeText(rawText);
 		if (!codeText) {
-			debug("Skipping element with empty code text", { index, language });
+			debug("Skipping element with empty code text", { el, language });
 			continue;
 		}
 
@@ -216,7 +217,7 @@ const DEBUG = false;
 			}).value;
 		else {
 			debug("Language not registered; using auto-detect", {
-				index,
+				el,
 				language,
 			});
 			highlighted = hljs.highlightAuto(codeText).value;
@@ -226,7 +227,7 @@ const DEBUG = false;
 		el.dataset.syntaxHighlighted = "true";
 		processedCount += 1;
 		debug("Highlighted element", {
-			index,
+			el,
 			language,
 			outputLength: highlighted.length,
 		});
